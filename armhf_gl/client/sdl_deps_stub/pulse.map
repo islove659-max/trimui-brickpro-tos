@@ -1,0 +1,36 @@
+PULSE_0 {
+ global:
+  pa_stream_connect_playback;
+  pa_stream_disconnect;
+  pa_context_get_source_info_by_index;
+  pa_get_library_version;
+  pa_context_get_sink_info_list;
+  pa_mainloop_new;
+  pa_context_get_source_info_list;
+  pa_stream_readable_size;
+  pa_operation_get_state;
+  pa_stream_write;
+  pa_context_connect;
+  pa_mainloop_iterate;
+  pa_context_disconnect;
+  pa_context_get_state;
+  pa_context_unref;
+  pa_mainloop_get_api;
+  pa_context_set_subscribe_callback;
+  pa_stream_unref;
+  pa_stream_get_state;
+  pa_stream_new;
+  pa_context_new;
+  pa_mainloop_free;
+  pa_mainloop_quit;
+  pa_channel_map_init_auto;
+  pa_mainloop_run;
+  pa_operation_unref;
+  pa_stream_peek;
+  pa_stream_connect_record;
+  pa_context_get_sink_info_by_index;
+  pa_stream_drop;
+  pa_stream_writable_size;
+  pa_context_subscribe;
+ local: *;
+};

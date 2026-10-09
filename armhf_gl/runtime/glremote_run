@@ -1,0 +1,58 @@
+#!/bin/sh
+# glremote_run <lenh 32-bit ...>
+#   Chay app/game ARMHF (32-bit) bang GPU PowerVR that + am thanh, qua glremote (TrimUI OS tos-4.0).
+#   Vi du trong script PortMaster:   GAMELIBS="$GAMEDIR/libs.armhf" glremote_run ./Game.armhf
+# Bien moi truong:
+#   GAMELIBS   thu muc thu vien 32-bit rieng cua game (uu tien truoc thu vien he thong)
+#   GLR_MAX    gioi han thoi gian chay (giay); 0 hoac khong dat = khong gioi han
+#   GLR_NULL=1 che do thu khong man hinh/loa (may ao, kiem thu)
+#   SDL_VIDEODRIVER / SDL_AUDIODRIVER   mac dinh KMSDRM_LEGACY / alsa (la ban gia do glremote cung cap)
+# Chi dung lenh co trong busybox cua rootfs goc (khong timeout, khong sleep le).
+# Runtime: trong firmware tos-4.0 (/usr/lib/glremote) hoac goi tren the SD (System/glremote, cho tos-3.0 va Stock co ARMHF)
+RT=/usr/lib/glremote
+[ -f "$RT/glserver" ] || RT=/mnt/SDCARD/System/glremote
+MAX="${GLR_MAX:-0}"
+NULLARG=""; [ "${GLR_NULL:-0}" = 1 ] && NULLARG="--null"
+IDLE=3600; [ "$MAX" -gt 0 ] 2>/dev/null && IDLE="$MAX"
+
+[ -f "$RT/glserver" ] || { echo "glremote_run: thieu glserver (can firmware tos-4.0 hoac goi glremote tren the SD: System/glremote)" >&2; exit 127; }
+[ -e /lib/ld-linux-armhf.so.3 ] || { echo "glremote_run: thieu runtime ARMHF (can firmware tos-3.0 tro len)" >&2; exit 127; }
+
+SRV=""; AUD=""; WD=""; APP=""
+cleanup() {
+  [ -n "$APP" ] && kill -9 $APP 2>/dev/null
+  [ -n "$WD" ] && kill -9 $WD 2>/dev/null
+  [ -n "$SRV" ] && kill -9 $SRV 2>/dev/null
+  [ -n "$AUD" ] && kill -9 $AUD 2>/dev/null
+  rm -f /dev/dri/card0 /tmp/glremote.shm /tmp/glremote.snd 2>/dev/null
+  rmdir /dev/dri 2>/dev/null
+}
+trap cleanup EXIT
+trap 'exit 143' TERM INT HUP
+
+LD_LIBRARY_PATH="/usr/trimui/lib:/mnt/SDCARD/System/lib:$LD_LIBRARY_PATH" "$RT/glserver" $NULLARG --seconds "$IDLE" > /tmp/glserver.log 2>&1 &
+SRV=$!
+LD_LIBRARY_PATH="/usr/trimui/lib:/mnt/SDCARD/System/lib:$LD_LIBRARY_PATH" "$RT/glserver" $NULLARG --audio > /tmp/glaudio.log 2>&1 &
+AUD=$!
+i=0; while { [ ! -e /tmp/glremote.shm ] || [ ! -e /tmp/glremote.snd ]; } && [ $i -lt 20 ]; do sleep 1; i=$((i+1)); done
+[ -z "$NULLARG" ] && echo 0 > /sys/class/speaker/mute 2>/dev/null
+# SDL2 KMSDRM tim /dev/dri/card*: tao tep gia (libdrm/libgbm trong lib32 la ban gia)
+mkdir -p /dev/dri
+[ -e /dev/dri/card0 ] || : > /dev/dri/card0
+export SDL_VIDEODRIVER="${SDL_VIDEODRIVER:-KMSDRM_LEGACY}"
+export SDL_AUDIODRIVER="${SDL_AUDIODRIVER:-alsa}"
+export SDL_JOYSTICK_HIDAPI="${SDL_JOYSTICK_HIDAPI:-0}"   # HIDAPI cua SDL2 Debian gay loi khi thoat; tay cau TrimUI dung evdev
+LIBPATH="$RT/lib32:$RT/lib32-sdl2"
+[ -n "$GAMELIBS" ] && LIBPATH="$GAMELIBS:$LIBPATH"
+unset LD_LIBRARY_PATH
+
+/lib/ld-linux-armhf.so.3 --library-path "$LIBPATH" "$@" &
+APP=$!
+if [ "$MAX" -gt 0 ] 2>/dev/null; then
+  ( sleep "$MAX"; kill -9 $APP 2>/dev/null ) &
+  WD=$!
+fi
+wait $APP
+RC=$?
+APP=""
+exit $RC

@@ -1,0 +1,12 @@
+target/
+dist/
+out/
+stub/
+sdl32/
+__pycache__/
+*.img
+*.fex
+*.zip
+*.so
+*.so.*
+*.log

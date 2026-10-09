@@ -1,0 +1,8 @@
+{
+  "label": "Hello Rust",
+  "icon": "icon.png",
+  "iconsel": "icon.png",
+  "icontop": "icon.png",
+  "launch": "launch.sh",
+  "description": "App mau Rust: fb pan vsync, evdev, am thanh"
+}

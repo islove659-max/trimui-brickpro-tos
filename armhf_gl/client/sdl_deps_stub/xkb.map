@@ -1,0 +1,13 @@
+V_0.5.0 {
+ global:
+  xkb_context_unref;
+  xkb_keymap_unref;
+  xkb_state_unref;
+  xkb_state_key_get_syms;
+  xkb_state_new;
+  xkb_context_new;
+  xkb_state_update_mask;
+  xkb_keysym_to_utf8;
+  xkb_keymap_new_from_string;
+ local: *;
+};

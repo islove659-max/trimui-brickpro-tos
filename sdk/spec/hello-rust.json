@@ -1,0 +1,26 @@
+{
+    "id":  "hello-rust",
+    "name":  "Hello Rust",
+    "version":  "0.2.0",
+    "description":  "App mẫu Rust musl tĩnh: fb pan+vsync, evdev, âm thanh",
+    "binary":  "bin/hello-tos",
+    "arch":  "aarch64",
+    "libc":  "musl-static",
+    "cpu_profile":  "balanced",
+    "needs":  [
+                  "fb",
+                  "evdev",
+                  "audio"
+              ],
+    "exit_codes":  {
+                       "42":  "restart (OTA)",
+                       "10":  "background-continue"
+                   },
+    "icon":  "icon.png",
+    "targets":  [
+                    "stock",
+                    "knulli",
+                    "spruce",
+                    "nextui"
+                ]
+}

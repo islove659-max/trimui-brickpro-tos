@@ -1,0 +1,6 @@
+# Gan tag ID_INPUT* cho thiet bi input (Stock thieu 60-input-id.rules) -> libinput/Weston/SDL3 nhan tay cam
+ACTION=="remove", GOTO="ti_end"
+SUBSYSTEM=="input", KERNEL=="event*|js*", IMPORT{builtin}="input_id"
+SUBSYSTEM=="input", KERNEL=="event*|js*", ENV{ID_INPUT_JOYSTICK}=="1", TAG+="seat", ENV{ID_SEAT}="seat0"
+SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT}=="1", TAG+="seat"
+LABEL="ti_end"

@@ -1,0 +1,18 @@
+Third-party components referenced or redistributed in the release packages
+==========================================================================
+
+* PortMaster (PortsMaster/PortMaster-New, package "trimui.portmaster.zip") - MIT License.
+  The "TrimUI PortMaster + glremote" release zip contains the upstream TrimUI package unmodified,
+  plus the glremote files (System/bin/glremote_run, System/glremote/...) added alongside it.
+
+* SDL2 2.0.14 (libsdl2-2.0-0_2.0.14+dfsg2-3+deb11u1_armhf.deb from Debian 11 "bullseye", sha256
+  b5d2ca16b9d4e861993f99e6722c19767bbe360448bffb69a769b6a570142e01 per the Debian Packages index) - zlib License.
+  Shipped as a fallback 32-bit library (System/glremote/lib32-sdl2/libSDL2-2.0.so.0). Source: https://packages.debian.org/source/bullseye/libsdl2
+
+* Debian 11 armhf glibc/libgcc/libstdc++ runtime (used by the tos-3.0/4.0 firmware builds, NOT redistributed here):
+  LGPL; sources available from Debian.
+
+* TrimUI firmware (bootloader, kernel, rootfs, MainUI): proprietary, (c) TrimUI. NOT included in this repository or releases.
+  The build tools operate on the user's own copy of the vendor recovery image.
+
+This project is not affiliated with or endorsed by TrimUI, PortMaster, Debian or the SDL project.

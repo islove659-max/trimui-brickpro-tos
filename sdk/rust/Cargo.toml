@@ -1,0 +1,17 @@
+[package]
+name = "hello-tos"
+version = "0.1.0"
+edition = "2021"
+description = "App mẫu TOS: framebuffer pan double-buffer + evdev, không phụ thuộc crate ngoài"
+
+# Quy tắc: chỉ dùng crate KHÔNG có build script (PC không có trình liên kết MSVC cho build script).
+[dependencies]
+# Chữ: ab_glyph thuần Rust, KHÔNG có build script (fontdue kéo libm cần trình liên kết MSVC của host)
+ab_glyph = { version = "0.2", default-features = false, features = ["std"] }
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

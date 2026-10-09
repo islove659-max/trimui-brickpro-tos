@@ -1,0 +1,8 @@
+[build]
+target = "armv7-unknown-linux-gnueabihf"
+
+[target.armv7-unknown-linux-gnueabihf]
+linker = "rust-lld"
+rustflags = ["-C", "linker-flavor=ld.lld", "-C", "link-arg=--dynamic-linker=/lib/ld-linux-armhf.so.3", "-C", "link-arg=-rpath=/tmp/armhf_ctest", "-C", "link-arg=-nostdlib","-C","link-arg=-Lsdl32","-C","link-arg=--allow-shlib-undefined", "-C", "force-unwind-tables=no", "-C", "link-arg=-Ltarget/armv7-unknown-linux-gnueabihf/release"]
+
+

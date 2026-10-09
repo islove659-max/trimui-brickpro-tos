@@ -1,0 +1,1 @@
+{ global: egl*; gl*; local: *; };

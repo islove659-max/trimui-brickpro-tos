@@ -1,0 +1,21 @@
+[workspace]
+resolver = "2"
+members = ["ctest_lib", "ctest_exe", "glremote", "gl_test", "sdl_test", "sdl_deps_stub", "drmgbm_stub", "sdl_rtest", "alsa_shim", "selftest"]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+[profile.dev]
+panic = "abort"
+
+
+
+
+
+
+
+
+
