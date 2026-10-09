@@ -13,7 +13,8 @@ Third-party components referenced or redistributed in the release packages
   (libc6_2.31-13+deb11u11, libgcc-s1_10.2.1-6, libstdc++6_10.2.1-6; sha256 checked against the Debian Packages index).
   Corresponding sources: https://packages.debian.org/source/bullseye/glibc and /gcc-10 . Users may replace these libraries freely (they are plain shared objects).
 
-* TrimUI firmware (bootloader, kernel, rootfs, MainUI): proprietary, (c) TrimUI. NOT included in this repository or releases.
-  The build tools operate on the user's own copy of the vendor recovery image.
+* TrimUI firmware (bootloader, kernel, rootfs, MainUI): proprietary, (c) TrimUI. NOT in this repository. The release asset
+  TOS-4.0-Flash-Firmware-BrickPro.zip is the vendor recovery image 1.1.1 (20260717) with the TOS changes applied, provided
+  for convenience; the copyright holder may request its removal. The build tools can also rebuild it from the user's own copy.
 
 This project is not affiliated with or endorsed by TrimUI, PortMaster, Debian or the SDL project.

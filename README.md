@@ -6,7 +6,12 @@ Dự án cá nhân, không liên kết với TrimUI. Mục tiêu: làm Stock OS 
 
 ## Tải về và cài (Releases)
 
-Cài **một lần, không cần nạp firmware, không xoá dữ liệu**:
+Có **2 cách**: (A) nạp nguyên firmware tos-4.0 (đủ mọi thứ, 1 file), hoặc (B) bộ cài chạy trên máy (không xoá dữ liệu).
+
+### A. Firmware nạp một phát — `TOS-4.0-Flash-Firmware-BrickPro.zip` (244 MB)
+Giải nén ra ảnh `.img`, ghi vào **thẻ SD trống** bằng balenaEtcher / Rufus (DD) / Win32 Disk Imager, cắm thẻ vào Brick Pro và bật nguồn: máy tự nạp lại bộ nhớ trong. Đã gồm runtime 32-bit, glremote, chế độ game, nhận thiết bị, tinh chỉnh bộ nhớ và `loglevel=4`. **Xoá cài đặt trong máy (âm lượng, ngôn ngữ…) và khoá SSH; dùng thẻ riêng, không dùng thẻ game.** Chỉ dành cho Brick Pro firmware gốc 1.1.1 (20260717). Hướng dẫn nằm trong zip (`HUONG_DAN_NAP.txt`). PortMaster nằm trên thẻ game nên vẫn cài riêng (gói `TOS-Installer+PortMaster`).
+
+### B. Bộ cài trên máy (không nạp firmware, không xoá dữ liệu)
 
 | File | Dùng để |
 |---|---|
@@ -19,7 +24,7 @@ Cài **một lần, không cần nạp firmware, không xoá dữ liệu**:
 
 Bộ cài thêm: runtime ARMHF 32-bit, glremote (game 32-bit chạy bằng GPU thật + âm thanh), luật nhận thiết bị đầu vào, tinh chỉnh bộ nhớ, và "chế độ game" (tự tạm dừng dịch vụ nền khi vào game).
 
-Ảnh firmware đầy đủ **không** được đăng (chứa phần mềm bản quyền của TrimUI). Ai cần có thể tự dựng bản firmware nạp đầy đủ từ ảnh gốc của chính mình bằng `tools/build_fw_v2.py`, xem [docs/FIRMWARE_V4.md](docs/FIRMWARE_V4.md).
+Ảnh firmware (cách A) là bản gốc 1.1.1 của TrimUI cộng các thay đổi ở trên (bootloader, nhân, recovery giữ nguyên từng byte); nó chứa phần mềm của TrimUI nên chủ sở hữu có quyền yêu cầu gỡ. Muốn tự dựng từ ảnh gốc của chính bạn: `tools/build_fw_v2.py`, xem [docs/FIRMWARE_V4.md](docs/FIRMWARE_V4.md).
 ## Dùng glremote
 
 Trong script của port PortMaster chỉ có bản ARMHF, thay dòng chạy game:
