@@ -66,20 +66,68 @@ for dest, tgt in links: man.append(f'L {dest} {tgt}')
 sd['System/tos/payload/MANIFEST'] = (('\n'.join(man) + '\n').encode(), 0o644)
 sd['System/tos/payload/VERSION'] = ((VER + '\n').encode(), 0o644)
 sd['System/tos/install.sh'] = (lf(rd(os.path.join(HERE, 'src', 'install.sh'))), 0o755)
+# hinh nen + font cho thong bao tren man hinh (khong phu thuoc System/resources cua the)
+sd['System/tos/res/bg.png'] = (rd(os.path.join(HERE, 'res', 'bg.png')), 0o644)
+sd['System/tos/res/font.ttf'] = (rd(os.path.join(HERE, 'res', 'font.ttf')), 0o644)
+sd['System/tos/res/OFL.txt'] = (rd(os.path.join(ROOT, 'sdk', 'rust', 'assets', 'OFL.txt')), 0o644)
+
+# ---- anh thong bao tren man hinh (co dau tieng Viet; sdl2imgshow chi ve chu Latin-1 nen ve san thanh anh) ----
+def msg_png(title, sub, accent):
+    W, H = 1024, 768
+    im = Image.new('RGB', (W, H)); dr = ImageDraw.Draw(im)
+    for y in range(H):
+        c = int(18 + (y / H) * 22); dr.line([(0, y), (W, y)], fill=(c, c + 6, c + 20))
+    ft = ImageFont.truetype(FONT, 54); fs = ImageFont.truetype(FONT, 30)
+    dr.rounded_rectangle((70, 250, W - 70, 520), 28, outline=accent, width=5)
+    dr.text((W // 2, 345), title, font=ft, fill=(255, 255, 255), anchor='mm')
+    lines, cur = [], ''
+    for w in sub.split():
+        t = (cur + ' ' + w).strip()
+        if dr.textlength(t, font=fs) > W - 200: lines.append(cur); cur = w
+        else: cur = t
+    if cur: lines.append(cur)
+    for i, ln in enumerate(lines): dr.text((W // 2, 430 + i * 42), ln, font=fs, fill=(205, 215, 230), anchor='mm')
+    b = io.BytesIO(); im.save(b, 'PNG', optimize=True); return b.getvalue()
+GREEN, RED, YEL = (80, 200, 120), (230, 100, 90), (240, 190, 80)
+MSGS = {
+    'start': ('Đang cài đặt TOS 4.0...', 'Vui lòng chờ, đừng tắt máy.', GREEN),
+    'copy': ('Đang chép tệp hệ thống...', 'Chỉ mất vài giây.', GREEN),
+    'done': ('Cài đặt xong!', 'Hãy KHỞI ĐỘNG LẠI máy để áp dụng đầy đủ.', GREEN),
+    'un_start': ('Đang gỡ cài đặt TOS...', 'Vui lòng chờ, đừng tắt máy.', YEL),
+    'un_done': ('Gỡ cài đặt xong.', 'Hãy khởi động lại máy.', YEL),
+    'un_none': ('TOS chưa được cài.', 'Không có gì để gỡ.', YEL),
+    'err_arch': ('Lỗi: máy không phù hợp', 'Bộ cài chỉ dành cho TrimUI Brick Pro (aarch64).', RED),
+    'err_stock': ('Lỗi: không phải Stock OS TrimUI', 'Không tìm thấy các tệp khởi động của hệ điều hành gốc.', RED),
+    'err_payload': ('Lỗi: thiếu gói cài đặt', 'Hãy giải nén ĐẦY ĐỦ file zip vào gốc thẻ SD rồi thử lại.', RED),
+    'err_hash': ('Lỗi: tệp trong gói bị hỏng', 'Hãy tải lại gói cài đặt rồi giải nén lại.', RED),
+    'err_space': ('Lỗi: hết chỗ trống trong hệ thống', 'Cần ít nhất 15 MB trống.', RED),
+    'err_write': ('Lỗi: không ghi được tệp hệ thống', 'Xem nhật ký System/tos/install.log trên thẻ SD.', RED),
+    'err': ('Lỗi khi cài đặt', 'Xem nhật ký System/tos/install.log trên thẻ SD.', RED),
+}
+for k, (a, b, c) in MSGS.items():
+    sd[f'System/tos/res/m_{k}.png'] = (msg_png(a, b, c), 0o644)
 
 # ---- app tren MainUI ----
 def icon(text, color):
-    im = Image.new('RGBA', (120, 120), (24, 28, 40, 255)); dr = ImageDraw.Draw(im)
-    dr.rounded_rectangle((6, 6, 113, 113), 18, outline=color, width=5)
-    f1 = ImageFont.truetype(FONT, 40); f2 = ImageFont.truetype(FONT, 17)
-    dr.text((60, 48), 'TOS', font=f1, fill=color, anchor='mm'); dr.text((60, 88), text, font=f2, fill=(230, 230, 230), anchor='mm')
+    # 300x300 RGBA, nen trong suot, o vuong bo goc o phia tren (cung kich thuoc/kieu icon PortMaster tren the)
+    im = Image.new('RGBA', (300, 300), (0, 0, 0, 0)); dr = ImageDraw.Draw(im)
+    tile = Image.new('RGBA', (176, 172), (0, 0, 0, 0)); td = ImageDraw.Draw(tile)
+    for y in range(172):
+        k = y / 171.0
+        td.line([(0, y), (176, y)], fill=(int(24 + 18 * k), int(30 + 22 * k), int(48 + 30 * k), 255))
+    mask = Image.new('L', (176, 172), 0); ImageDraw.Draw(mask).rounded_rectangle((0, 0, 175, 171), 40, fill=255)
+    im.paste(tile, (62, 24), mask)
+    dr.rounded_rectangle((62, 24, 237, 195), 40, outline=color, width=6)
+    f1 = ImageFont.truetype(FONT, 62); f2 = ImageFont.truetype(FONT, 26)
+    dr.text((150, 92), 'TOS', font=f1, fill=color, anchor='mm'); dr.text((150, 158), text, font=f2, fill=(235, 235, 235), anchor='mm')
     b = io.BytesIO(); im.save(b, 'PNG'); return b.getvalue()
 apps = {
     'TOS_CaiDat': ('TOS - Cai dat / Cap nhat', 'Cai runtime 32-bit, glremote va toi uu he thong (che do game). Khong xoa du lieu.', 'install', 'CAI DAT', (80, 200, 120)),
     'TOS_GoCaiDat': ('TOS - Go cai dat', 'Go sach TOS, tra lai tep goc.', 'uninstall', 'GO', (220, 110, 90)),
 }
 for name, (label, desc, action, ictext, color) in apps.items():
-    cfg = json.dumps({'label': label, 'icon': 'icon.png', 'iconsel': 'icon.png', 'icontop': 'icon.png', 'launch': 'launch.sh', 'description': desc, 'themecolor': '50C878'}, indent=2)
+    # chi 'icon' + 'iconsel' (giong PortMaster); KHONG them 'icontop' vi MainUI ve ca hai -> 2 anh de len nhau
+    cfg = json.dumps({'label': label, 'icon': 'icon.png', 'iconsel': 'icon.png', 'launch': 'launch.sh', 'description': desc}, indent=2)
     sd[f'Apps/{name}/config.json'] = (cfg.encode('ascii'), 0o644)
     sd[f'Apps/{name}/launch.sh'] = (f'#!/bin/sh\ncd "$(dirname "$0")"\nexec sh /mnt/SDCARD/System/tos/install.sh {action}\n'.encode(), 0o755)
     sd[f'Apps/{name}/icon.png'] = (icon(ictext, color), 0o644)

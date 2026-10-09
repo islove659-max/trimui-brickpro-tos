@@ -19,21 +19,29 @@ END='# [tos-end]'
 
 ver() { cat "$VERSION_FILE" 2>/dev/null | head -1; }
 log() { echo "$(date '+%F %T') $*" >> "$LOG"; echo "$*"; }
-msg() {   # msg "van ban" [giay]: in log + hien tren man hinh (neu co sdl2imgshow cua PortMaster)
+msg() {   # msg "log khong dau" [giay] [khoa]: in log + hien tren man hinh bang sdl2imgshow cua PortMaster.
+          # Man hinh dung ANH dung san (System/tos/res/m_<khoa>.png, co dau tieng Viet); khong co anh thi dung chu khong dau.
     log "$1"
-    if [ "${TOS_SCREEN:-1}" = 1 ] && [ -x "$SHOW" ] && [ -f "$RES/background.png" ]; then
-        "$SHOW" -i "$RES/background.png" -f "$RES/DejaVuSans.ttf" -s 34 -c "0,0,0" -t "$1" >/dev/null 2>&1 &
+    if [ "${TOS_SCREEN:-1}" = 1 ] && [ -f "$SHOW" ]; then
+        _img="$BASE/res/m_${3:-none}.png"
+        if [ -f "$_img" ]; then
+            "$SHOW" -i "$_img" >/dev/null 2>&1 &
+        else
+            _bg="$BASE/res/bg.png"; _ft="$BASE/res/font.ttf"
+            [ -f "$_bg" ] && [ -f "$_ft" ] || return 0
+            "$SHOW" -i "$_bg" -f "$_ft" -s 30 -c "255,255,255" -t "$1" >/dev/null 2>&1 &
+        fi
         _p=$!
         sleep "${2:-2}"
-        kill "$_p" 2>/dev/null
+        kill -9 "$_p" 2>/dev/null
     fi
 }
-die() { msg "LOI: $1" 6; exit 1; }
+die() { msg "LOI: $1" 6 "${2:-err}"; exit 1; }
 
 check_env() {
-    [ "$(uname -m)" = aarch64 ] || die "may khong phai aarch64"
-    [ -f /usr/trimui/bin/preload.sh ] && [ -f /usr/trimui/bin/premainui.sh ] || die "khong phai Stock OS TrimUI (thieu preload.sh/premainui.sh)"
-    [ -f "$MANIFEST" ] || die "thieu payload (giai nen day du goi vao goc the SD)"
+    [ "$(uname -m)" = aarch64 ] || die "may khong phai aarch64" err_arch
+    [ -f /usr/trimui/bin/preload.sh ] && [ -f /usr/trimui/bin/premainui.sh ] || die "khong phai Stock OS TrimUI (thieu preload.sh/premainui.sh)" err_stock
+    [ -f "$MANIFEST" ] || die "thieu payload (giai nen day du goi vao goc the SD)" err_payload
 }
 
 verify_payload() {
@@ -41,9 +49,9 @@ verify_payload() {
     while read -r t a b c d e; do
         [ "$t" = F ] || continue
         # F mode sha256 size relpath dest
-        [ -f "$PAY/$d" ] || die "thieu tep goi: $d"
+        [ -f "$PAY/$d" ] || die "thieu tep goi: $d" err_payload
         h=$(sha256sum "$PAY/$d" | cut -d' ' -f1)
-        [ "$h" = "$b" ] || die "tep goi hong (sha256 sai): $d"
+        [ "$h" = "$b" ] || die "tep goi hong (sha256 sai): $d" err_hash
         n=$((n+1))
     done < "$MANIFEST"
     log "goi cai dat: $n tep, sha256 dung"
@@ -58,23 +66,23 @@ patch_hook() {  # patch_hook <file> <anchor-regex> <lenh>
     if [ "$c" != 1 ]; then log "hook $f: khong tim thay dung 1 diem chen ($c) -> bo qua (che do game tat)"; return 0; fi
     mkdir -p "$BK/hooks"; [ -f "$BK/hooks/$(basename "$f").orig" ] || cp -p "$f" "$BK/hooks/$(basename "$f").orig"
     printf '%s\n%s\n%s\n' "$BEGIN" "$cmd" "$END" > /tmp/tos_snip.$$
-    sed -i "/^$anchor\$/r /tmp/tos_snip.$$" "$f" || die "khong va duoc $f"
+    sed -i "/^$anchor\$/r /tmp/tos_snip.$$" "$f" || die "khong va duoc $f" err_write
     rm -f /tmp/tos_snip.$$
-    grep -q 'tos-begin' "$f" || die "va $f that bai"
+    grep -q 'tos-begin' "$f" || die "va $f that bai" err_write
     log "hook $f: da chen"
     echo "$f" >> "$BK/patched.list"
 }
 
 do_install() {
     check_env
-    msg "TOS $(ver): bat dau cai dat..." 2
+    msg "TOS $(ver): bat dau cai dat..." 2 start
     avail=$(df -k / | tail -1 | awk '{print $4}')
-    [ "${avail:-0}" -ge 15000 ] || die "het cho trong (/ con ${avail} kB, can >= 15000)"
+    [ "${avail:-0}" -ge 15000 ] || die "het cho trong (/ con ${avail} kB, can >= 15000)" err_space
     verify_payload
     mkdir -p "$BK"; : > "$BK/created.list.new"; : > "$BK/replaced.list.new"
     [ -f "$BK/created.list" ] && cat "$BK/created.list" >> "$BK/created.list.new"
     [ -f "$BK/replaced.list" ] && cat "$BK/replaced.list" >> "$BK/replaced.list.new"
-    msg "Dang chep tep he thong..." 1
+    msg "Dang chep tep he thong..." 2 copy
     ncre=0; nrep=0; nskip=0
     while read -r t a b c d e; do
         case "$t" in
@@ -92,7 +100,7 @@ do_install() {
             else
                 echo "F $dest" >> "$BK/created.list.new"; ncre=$((ncre+1))
             fi
-            cp "$PAY/$d" "$dest.tos_new" && chmod "$a" "$dest.tos_new" && mv -f "$dest.tos_new" "$dest" || die "khong ghi duoc $dest" ;;
+            cp "$PAY/$d" "$dest.tos_new" && chmod "$a" "$dest.tos_new" && mv -f "$dest.tos_new" "$dest" || die "khong ghi duoc $dest" err_write ;;
         L)  # L dest target
             if [ -L "$a" ] && [ "$(readlink "$a")" = "$b" ]; then nskip=$((nskip+1)); continue; fi
             if [ -e "$a" ] || [ -L "$a" ]; then log "bo qua symlink $a (da co)"; continue; fi
@@ -116,12 +124,12 @@ do_install() {
     mkdir -p "$(dirname "$STATE")"
     printf 'version=%s\ndate=%s\n' "$(ver)" "$(date '+%F %T')" > "$STATE"
     sync
-    msg "Cai dat xong. Hay KHOI DONG LAI may de ap dung day du." 7
+    msg "Cai dat xong. Hay KHOI DONG LAI may de ap dung day du." 8 done
 }
 
 do_uninstall() {
-    [ -f "$STATE" ] || [ -f "$BK/created.list" ] || { msg "TOS chua duoc cai bang bo cai dat nay." 4; exit 0; }
-    msg "Dang go cai dat TOS..." 2
+    [ -f "$STATE" ] || [ -f "$BK/created.list" ] || { msg "TOS chua duoc cai bang bo cai dat nay." 4 un_none; exit 0; }
+    msg "Dang go cai dat TOS..." 2 un_start
     # go moc khoi hook
     for f in /usr/trimui/bin/preload.sh /usr/trimui/bin/premainui.sh; do
         if grep -q 'tos-begin' "$f" 2>/dev/null; then sed -i "/# \[tos-begin\]/,/# \[tos-end\]/d" "$f" && log "hook $f: da go"; fi
@@ -138,7 +146,7 @@ do_uninstall() {
     rm -f "$STATE"; rmdir /usr/lib/tos 2>/dev/null
     rm -rf "$BK"
     sync
-    msg "Go cai dat xong. Hay khoi dong lai may." 6
+    msg "Go cai dat xong. Hay khoi dong lai may." 7 un_done
 }
 
 do_status() {
