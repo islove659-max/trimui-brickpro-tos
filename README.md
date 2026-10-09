@@ -24,7 +24,7 @@ Giải nén ra ảnh `.img`, ghi vào **thẻ SD trống** bằng balenaEtcher /
 
 Bộ cài thêm: runtime ARMHF 32-bit, glremote (game 32-bit chạy bằng GPU thật + âm thanh), luật nhận thiết bị đầu vào, tinh chỉnh bộ nhớ, và "chế độ game" (tự tạm dừng dịch vụ nền khi vào game).
 
-Ảnh firmware (cách A) là bản gốc 1.1.1 của TrimUI cộng các thay đổi ở trên (bootloader, nhân, recovery giữ nguyên từng byte); nó chứa phần mềm của TrimUI nên chủ sở hữu có quyền yêu cầu gỡ. Muốn tự dựng từ ảnh gốc của chính bạn: `tools/build_fw_v2.py`, xem [docs/FIRMWARE_V4.md](docs/FIRMWARE_V4.md).
+> **Bản quyền và quyền thu hồi:** ảnh firmware (cách A) là bản gốc 1.1.1 của TrimUI cộng các thay đổi của dự án này (bootloader, nhân, recovery giữ nguyên từng byte). Phần mềm gốc **thuộc quyền sở hữu của nhà sản xuất TrimUI; nhà sản xuất có toàn quyền yêu cầu thu hồi/gỡ file này bất cứ lúc nào**, và người đăng cam kết gỡ ngay khi nhận được yêu cầu. File chỉ được đăng để tiện cho người dùng máy cũ đã ngừng cập nhật, không nhằm mục đích thương mại. Không có yêu cầu nào thì file vẫn nằm ở đây; ai muốn chắc chắn có thể tự dựng từ ảnh gốc của chính mình bằng `tools/build_fw_v2.py`, xem [docs/FIRMWARE_V4.md](docs/FIRMWARE_V4.md).
 ## Dùng glremote
 
 Trong script của port PortMaster chỉ có bản ARMHF, thay dòng chạy game:

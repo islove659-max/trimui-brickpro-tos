@@ -15,6 +15,7 @@ Third-party components referenced or redistributed in the release packages
 
 * TrimUI firmware (bootloader, kernel, rootfs, MainUI): proprietary, (c) TrimUI. NOT in this repository. The release asset
   TOS-4.0-Flash-Firmware-BrickPro.zip is the vendor recovery image 1.1.1 (20260717) with the TOS changes applied, provided
-  for convenience; the copyright holder may request its removal. The build tools can also rebuild it from the user's own copy.
+  for convenience. The manufacturer (TrimUI) owns the original software and has the right to request its removal/revocation at any time;
+  the publisher will remove it promptly upon such a request. The build tools can also rebuild it from the user's own copy.
 
 This project is not affiliated with or endorsed by TrimUI, PortMaster, Debian or the SDL project.
