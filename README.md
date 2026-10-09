@@ -4,22 +4,29 @@ Dự án cá nhân, không liên kết với TrimUI. Mục tiêu: làm Stock OS 
 
 *English summary:* tooling and a GLES/audio remoting runtime (**glremote**) that lets 32-bit ARMHF games use the real PowerVR GPU and audio on the Brick Pro stock OS, which ships no 32-bit GPU driver. A 32-bit shim (`libEGL`/`libGLESv2`/fake `libdrm`/`libgbm`/`libasound`) forwards commands through shared memory to a 64-bit Rust server. Verified on hardware with Apotris (armhf): 60 FPS with sound.
 
-## Tải về (Releases)
+## Tải về và cài (Releases)
+
+Cài **một lần, không cần nạp firmware, không xoá dữ liệu**:
 
 | File | Dùng để |
 |---|---|
-| `glremote-sd-pack-*.zip` | Giải nén vào **gốc thẻ SD** → `System/bin/glremote_run` + `System/glremote/`. Cho firmware có runtime ARMHF (tos-3.0 trở lên). |
-| `TrimUI PortMaster + glremote (Brick Pro) *.zip` | Gói PortMaster gốc cho TrimUI (không sửa) **kèm sẵn** glremote — cài PortMaster lần đầu là có. |
+| `TOS-Installer+PortMaster-4.0.zip` | **Thẻ mới / chưa có PortMaster:** bộ cài + gói PortMaster gốc cho TrimUI (không sửa). |
+| `TOS-Installer-4.0.zip` | **Thẻ đã có PortMaster:** chỉ bộ cài (không ghi đè PortMaster của bạn). |
 
-Ảnh firmware đầy đủ **không** được đăng (chứa phần mềm bản quyền của TrimUI). Công cụ trong `tools/` tự dựng ảnh *tos-4.0* từ ảnh gốc của chính bạn (`build_fw_v2.py`), xem [docs/FIRMWARE_V4.md](docs/FIRMWARE_V4.md).
+1. Giải nén zip vào **gốc thẻ SD** (cắm thẻ vào máy tính; thư mục `Apps`, `System` sẽ được gộp).
+2. Cắm thẻ vào Brick Pro, vào mục Apps, mở **"TOS - Cai dat / Cap nhat"**. Màn hình báo tiến trình; xong thì khởi động lại máy.
+3. Gỡ bất cứ lúc nào bằng app **"TOS - Go cai dat"**. Chi tiết và cơ chế an toàn: [docs/INSTALLER.md](docs/INSTALLER.md).
 
+Bộ cài thêm: runtime ARMHF 32-bit, glremote (game 32-bit chạy bằng GPU thật + âm thanh), luật nhận thiết bị đầu vào, tinh chỉnh bộ nhớ, và "chế độ game" (tự tạm dừng dịch vụ nền khi vào game).
+
+Ảnh firmware đầy đủ **không** được đăng (chứa phần mềm bản quyền của TrimUI). Ai cần có thể tự dựng bản firmware nạp đầy đủ từ ảnh gốc của chính mình bằng `tools/build_fw_v2.py`, xem [docs/FIRMWARE_V4.md](docs/FIRMWARE_V4.md).
 ## Dùng glremote
 
 Trong script của port PortMaster chỉ có bản ARMHF, thay dòng chạy game:
 
 ```sh
 export GAMELIBS="$GAMEDIR/libs.armhf"      # thư viện 32-bit của game (nếu có)
-glremote_run ./TenGame.armhf               # hoặc /mnt/SDCARD/System/bin/glremote_run
+glremote_run ./TenGame.armhf               # lệnh có sẵn sau khi cài bộ cài TOS
 ```
 
 Biến tuỳ chọn: `GLR_MAX` (giới hạn giây), `GLR_NULL=1` (thử không màn hình/loa), `SDL_VIDEODRIVER` (mặc định `KMSDRM_LEGACY`), `SDL_AUDIODRIVER` (mặc định `alsa`; cả hai là bản giả do glremote cung cấp).
@@ -32,18 +39,19 @@ Giới hạn: chỉ OpenGL ES 2 (không GLES3/VAO), một luồng GL, âm thanh 
 |---|---|
 | `armhf_gl/client` | shim 32-bit `no_std` (Rust, syscall ARM EABI thô): `glremote`, `alsa_shim`, `drmgbm_stub`, `sdl_deps_stub`, app thử |
 | `armhf_gl/server_rs` | máy chủ 64-bit `glserver` (Rust `no_std`, nạp SDL2 lúc chạy): GPU + tiến trình âm thanh (`--audio`, OSS `/dev/dsp`) + chế độ `--null` |
-| `armhf_gl/build_runtime.ps1`, `pack_runtime.py`, `build_sd_pack.py` | dựng runtime và các gói phát hành |
+| `armhf_gl/build_runtime.ps1`, `pack_runtime.py` | dựng runtime glremote |
+| `installer/` | bộ cài TOS trên máy (`install.sh`) và script dựng gói phát hành (`build_installer.py`) |
 | `tools/` | dựng ảnh firmware (ext4lite), kiểm toán rootfs, kiểm thử máy ảo QEMU, ghi thẻ SD (có chốt an toàn) |
 | `docs/` | kế hoạch, kiến trúc, từng bản firmware (v2/v3/v4), thiết kế glremote ([ARMHF_DOHOA.md](docs/ARMHF_DOHOA.md)) |
 | `rootfs_overlay/`, `sdk/`, `apps_mau/` | file chồng lên rootfs, SDK Rust (fb/evdev/audio/chữ Việt), app mẫu |
 
 ## Dựng lại
 
-Cần Rust (target `aarch64-unknown-linux-musl`, `armv7-unknown-linux-gnueabihf`, linker `rust-lld`, không cần MSVC). `powershell -File armhf_gl/build_runtime.ps1` rồi `python armhf_gl/build_sd_pack.py`. Firmware: `python tools/build_fw_v2.py --armhf <thư_mục> --glremote armhf_gl/dist` (cần ảnh recovery gốc và gói ARMHF Debian 11 trích bằng `tools/lay_armhf.py`).
+Cần Rust (target `aarch64-unknown-linux-musl`, `armv7-unknown-linux-gnueabihf`, linker `rust-lld`, không cần MSVC). `powershell -File armhf_gl/build_runtime.ps1` rồi `python installer/build_installer.py`. Firmware: `python tools/build_fw_v2.py --armhf <thư_mục> --glremote armhf_gl/dist` (cần ảnh recovery gốc và gói ARMHF Debian 11 trích bằng `tools/lay_armhf.py`).
 
 ## Kiểm thử
 
-Bộ kiểm thử máy ảo QEMU aarch64 chạy trên rootfs thật: `tools/vm_guest_tests.sh` (38 kiểm tra chung), `tools/vm_guest_glremote.sh` (33), `tools/vm_guest_glremote_sd.sh` (16). Máy ảo không có GPU/loa nên glremote chạy chế độ `--null`; phần phần cứng thật được kiểm trên máy.
+Bộ kiểm thử máy ảo QEMU aarch64 chạy trên rootfs thật: `tools/vm_guest_tests.sh` (38 kiểm tra chung), `tools/vm_guest_glremote.sh` (33), `tools/vm_guest_glremote_sd.sh` (16), `tools/vm_guest_installer.sh` (27 trên Stock gốc, 24 trên rootfs đã có TOS). Máy ảo không có GPU/loa nên glremote chạy chế độ `--null`; phần phần cứng thật được kiểm trên máy.
 
 ## Cảnh báo
 
