@@ -1,0 +1,201 @@
+
+=== vm-common-renderfix.log ===
+nhan Linux: 6.12.110-0-virt (aarch64)
+PASS mount rootfs v2 (ext4, ro) bang nhan Linux that
+he thong: DISTRIB_ID='tina.raymanfeng.20260717.090727' DISTRIB_RELEASE='Neptune'
+phien ban: tos-4.0 base: tg4040 brickpro 1.1.1-20260717 build: 2026-10-09 15:24 loglevel4: 1 armhf: 1 glremote: 1
+PASS /run la symlink -> /var/run
+PASS /run phan giai duoc (qua /var/run)
+PASS luat udev 61-trimui-input.rules co
+PASS sysctl.d/90-trimui-tuning.conf co
+PASS tos_gamemode.sh co + thuc thi
+PASS tos_env.sh co
+PASS preload.sh/premainui.sh con quyen thuc thi
+PASS preload.sh co moc [tos]
+PASS premainui.sh co moc [tos]
+PASS preload.sh giu lenh goc (governor ondemand)
+PASS fstab the SD VAN CON sync (khong doi)
+PASS KHONG co swap trong thay doi moi
+PASS sh -n /usr/trimui/bin/preload.sh
+PASS sh -n /usr/trimui/bin/premainui.sh
+PASS sh -n /usr/trimui/bin/tos_gamemode.sh
+PASS sh -n /usr/lib/tos/tos_env.sh
+PASS sh -n /usr/trimui/bin/runtrimui.sh
+--- sysctl: kernel.printk = 4 4 1 7;fs.inotify.max_user_watches = 65536;fs.inotify.max_user_instances = 256;net.core.rmem_max = 1048576;net.core.wmem_max = 1048576;vm.vfs_cache_pressure = 50;
+PASS sysctl: fs.inotify.max_user_watches=65536
+PASS sysctl: vm.vfs_cache_pressure=50
+PASS sysctl: kernel.printk = 4 4 1 7
+PASS sysctl: net.core.rmem_max=1048576
+PASS udevd (nhi phan that cua may) chay duoc
+--- udevadm test: dong nhac toi luat TOS: 1; dong loi lien quan luat TOS: 0
+PASS udev: luat TOS duoc doc
+PASS udev: luat TOS khong co loi cu phap
+--- (khong thu khop thiet bi input: nhan Alpine khong gan driver virtio_input; khop luat da kiem tren may that bang libinput)
+GM0 sftpgo=[479] mtp=[480]
+GM1 sftpgo=[] mtp=[] status=ON
+GM2 sftpgo=[568] mtp=[559] status=OFF
+GM3 (khong co cmd_to_run) sftpgo=[568] status=OFF
+GM4 (GAMEMODE=0) sftpgo=[568] status=OFF
+PASS che do game: truoc khi vao game 2 dich vu dang chay
+PASS che do game: vao game (preload) => dung ca 2, trang thai ON
+PASS che do game: ve menu (premainui) => bat lai ca 2, trang thai OFF
+PASS che do game: KHONG co cmd_to_run => khong dung gi
+PASS che do game: GAMEMODE=0 => tat han
+--- busybox cua rootfs: busybox: applet not found
+PASS tos_gamemode.sh khong dung find -delete (busybox 1.27.2 khong ho tro)
+--- ARMHF: co /lib/ld-linux-armhf.so.3 -> arm-linux-gnueabihf/ld-2.31.so
+PASS armhf: /lib/ld-linux-armhf.so.3 -> arm-linux-gnueabihf/ld-2.31.so
+PASS armhf: ld-2.31.so la ELF 32-bit ARM (e_machine=40)
+PASS armhf: du libc/libm/libpthread/libdl/librt/libgcc_s/libstdc++
+--- chay libc.so.6 32-bit qua loader armhf: GNU C Library (Debian GLIBC 2.31-13+deb11u11) stable release version 2.31.
+PASS armhf: CHAY duoc chuong trinh 32-bit qua /lib/ld-linux-armhf.so.3 (libc banner)
+--- ld --list: 	/lib/ld-linux-armhf.so.3 (0xf7e30000);
+PASS armhf: loader 32-bit tu chay duoc (--list)
+PASS 64-bit KHONG bi anh huong (busybox aarch64 van chay)
+--- TOSENV os=stock device=unknown
+PASS tos_env.sh nap + tos_detect chay duoc
+SUMMARY pass=38 fail=0
+
+
+=== vm-glremote-renderfix.log ===
+nhan Linux: 6.12.110-0-virt (aarch64)
+PASS mount rootfs (ext4, ro)
+phien ban: tos-4.0 base: tg4040 brickpro 1.1.1-20260717 build: 2026-10-09 15:24 loglevel4: 1 armhf: 1 glremote: 1
+PASS tos_version co glremote: 1
+PASS glserver co + thuc thi
+PASS glremote_run co + thuc thi
+PASS sh -n glremote_run (busybox that)
+PASS glserver la ELF aarch64 (e_machine=183)
+PASS libglremote.so la ELF 32-bit ARM (e_machine=40)
+PASS symlink libEGL.so.1 -> libglremote.so
+PASS symlink libGLESv2.so.2 -> libglremote.so
+PASS symlink libGL.so.1 -> libglremote.so
+PASS symlink libGLESv1_CM.so.1 -> libglremote.so
+PASS symlink libgbm.so.1 -> libdrm.so.2
+PASS symlink libX11.so.6 -> libsdl_deps_stub.so
+PASS libasound.so.2 (ban gia) co
+PASS libSDL2 32-bit du phong co
+PASS ARMHF nen tang (ld-linux-armhf) van con
+PASS tep goc 64-bit khong bi doi: SDL2 he thong
+--- ld --list selftest: 10 thu vien; khong tim thay: 0
+PASS selftest 32-bit: moi phu thuoc tim thay (khong 'not found')
+PASS selftest 32-bit: libSDL2 nap tu lib32-sdl2
+PASS selftest 32-bit: libasound la ban gia
+--- ma thoat glremote_run/selftest: 0
+--- glserver.log:
+--- glaudio.log:
+PASS selftest tat audio+video+timer sach (STEP quit timer in ra)
+PASS selftest ma thoat 0, hoac 139 CHI khi sap o QuitSubSystem(JOYSTICK) cua SDL2 Debian (loi da biet)
+PASS selftest: SDL chon driver KMSDRM_LEGACY
+PASS selftest: ve du 150 khung
+PASS selftest: callback am thanh SDL (alsa gia) duoc goi
+PASS selftest: mo duoc thiet bi am thanh
+PASS glserver nhan lenh GL (bao cao cuoi >= 60 khung, >= 500 lenh)
+PASS glserver KHONG bao lenh la / loi shader
+PASS tien trinh am thanh nhan cau hinh 48000 Hz 2 kenh
+PASS khong con glserver chay
+PASS da xoa /dev/dri/card0 tao tam
+PASS da xoa bo nho chung /tmp/glremote.shm,.snd
+--- chay file khong ton tai: ma=127 thoi gian=1s: /usr/bin/glremote_run: line 50: /tmp/selftest_missing: not found
+PASS app loi => glremote_run thoat gon (<=20s) va don dep
+SUMMARY pass=33 fail=0
+
+
+=== vm-installer-stock-renderfix.log ===
+nhan Linux: 6.12.110-0-virt (aarch64)
+PASS mount rootfs (ext4, rw trong snapshot)
+PASS goi: install.sh, payload/MANIFEST, 2 app co mat
+PASS sh -n install.sh + launch.sh (busybox that)
+PASS TRUOC: chua co ld-linux-armhf, chua co glremote
+PASS TRUOC: hook chua co [tos]
+--- status truoc: TOS chua cai bang bo cai dat;ARMHF: khong  glremote: khong  che do game: ;
+--- install lan 1: ma=0
+PASS install lan 1 thanh cong (ma 0)
+PASS ARMHF: ld-linux-armhf.so.3 co + chay libc 32-bit
+PASS glremote: glremote_run + glserver co
+PASS udev rule + sysctl + tos_gamemode + tos_env co
+PASS preload.sh / premainui.sh con cu phap dung (sh -n)
+PASS hook co goi tos_gamemode (on / off)
+PASS hook giu lenh goc (echo ondemand)
+PASS /run -> /var/run
+PASS ban sao luu hook goc o /mnt/UDISK/tos/backup
+--- status sau: TOS da cai: version=4.0 date=2026-10-09 08:31:08 ;ARMHF: co  glremote: co  che do game: OFF (877676 kB);
+PASS status bao da cai
+PASS sau cai: game 32-bit ve du 150 khung + am thanh
+GM1 sftpgo=[] mtp=[] status=ON
+GM2 sftpgo=[941] mtp=[931] status=OFF
+PASS che do game (qua hook da cai): vao game dung 2 dich vu
+PASS che do game: ve menu bat lai 2 dich vu
+--- install lan 2: ma=0: tep: moi 0, ghi de 0 (da luu ban goc), giu nguyen 80
+PASS install lan 2 (cap nhat) ma 0
+PASS install lan 2: khong chen hook lan nua
+PASS install lan 2: moi 0, ghi de 0
+--- uninstall: ma=0
+PASS uninstall ma 0
+PASS uninstall: hook tro ve ban goc (cmp)
+PASS uninstall: da go glremote, ARMHF, udev, sysctl, gamemode
+PASS uninstall: /run symlink do TOS da go
+PASS status sau go: chua cai
+PASS cai lai sau khi go: thanh cong
+SUMMARY pass=27 fail=0
+
+
+=== vm-installer-upgrade-renderfix.log ===
+nhan Linux: 6.12.110-0-virt (aarch64)
+PASS mount rootfs (ext4, rw trong snapshot)
+PASS goi: install.sh, payload/MANIFEST, 2 app co mat
+PASS sh -n install.sh + launch.sh (busybox that)
+--- status truoc: TOS chua cai bang bo cai dat;firmware: tos-4.0;ARMHF: co  glremote: co  che do game: OFF (873468 kB);
+--- install lan 1: ma=0
+PASS install lan 1 thanh cong (ma 0)
+PASS ARMHF: ld-linux-armhf.so.3 co + chay libc 32-bit
+PASS glremote: glremote_run + glserver co
+PASS udev rule + sysctl + tos_gamemode + tos_env co
+PASS preload.sh / premainui.sh con cu phap dung (sh -n)
+PASS hook co goi tos_gamemode (on / off)
+PASS hook giu lenh goc (echo ondemand)
+PASS /run -> /var/run
+PASS ban sao luu hook goc o /mnt/UDISK/tos/backup
+--- status sau: TOS da cai: version=4.0 date=2026-10-09 08:32:15 ;firmware: tos-4.0;ARMHF: co  glremote: co  che do game: OFF (869208 kB);
+PASS status bao da cai
+PASS sau cai: game 32-bit ve du 150 khung + am thanh
+GM1 sftpgo=[] mtp=[] status=ON
+GM2 sftpgo=[930] mtp=[921] status=OFF
+PASS che do game (qua hook da cai): vao game dung 2 dich vu
+PASS che do game: ve menu bat lai 2 dich vu
+--- install lan 2: ma=0: tep: moi 0, ghi de 0 (da luu ban goc), giu nguyen 80
+PASS install lan 2 (cap nhat) ma 0
+PASS install lan 2: khong chen hook lan nua
+PASS install lan 2: moi 0, ghi de 0
+--- uninstall: ma=0
+PASS uninstall ma 0
+PASS uninstall: hook tro ve ban goc (cmp)
+PASS uninstall tren firmware da co TOS: khong go tep cua firmware
+PASS status sau go: chua cai
+PASS cai lai sau khi go: thanh cong
+SUMMARY pass=24 fail=0
+
+
+=== vm-sd-renderfix.log ===
+nhan Linux: 6.12.110-0-virt (aarch64)
+PASS mount rootfs (ext4, ro)
+phien ban: tos-3.0 base: tg4040 brickpro 1.1.1-20260717 build: 2026-10-08 23:09 loglevel4: 1 armhf: 1
+PASS rootfs KHONG co glremote trong firmware (dung de thu goi SD)
+PASS rootfs co ARMHF (ld-linux-armhf)
+PASS goi SD: System/bin/glremote_run
+PASS goi SD: glserver, libglremote, libdrm, libasound, SDL2 du phong
+PASS goi SD: ban sao (khong symlink) libEGL.so.1, libGLESv2.so.2, libgbm.so.1
+PASS goi SD: libEGL.so.1 giong libglremote.so (cmp)
+PASS sh -n glremote_run (busybox that)
+PASS glremote_run dung System/glremote khi firmware khong co
+--- ma thoat: 0
+--- glserver.log:
+--- glaudio.log:
+PASS chay tu goi SD: SDL chon KMSDRM_LEGACY
+PASS chay tu goi SD: ve du 150 khung
+PASS chay tu goi SD: callback am thanh duoc goi
+PASS chay tu goi SD: glserver nhan >= 500 lenh
+PASS chay tu goi SD: tien trinh am thanh nhan 48000 Hz 2 kenh
+PASS ma thoat 0, hoac 139 chi khi sap o QuitSubSystem(JOYSTICK) (loi da biet)
+PASS don dep: khong con glserver, /dev/dri/card0, bo nho chung
+SUMMARY pass=16 fail=0

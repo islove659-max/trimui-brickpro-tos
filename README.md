@@ -8,7 +8,7 @@ Dự án cá nhân, không liên kết với TrimUI. Mục tiêu: làm Stock OS 
 
 Có **2 cách**: (A) nạp nguyên firmware tos-4.0 (đủ mọi thứ, 1 file), hoặc (B) bộ cài chạy trên máy (không xoá dữ liệu).
 
-### A. Firmware nạp một phát — `TOS-4.0-Flash-Firmware-BrickPro.zip` (244 MB)
+### A. Firmware nạp một phát — `TOS-4.0-Flash-Firmware-BrickPro.zip` (khoảng 255 MiB)
 Giải nén ra ảnh `.img`, ghi vào **thẻ SD trống** bằng balenaEtcher / Rufus (DD) / Win32 Disk Imager, cắm thẻ vào Brick Pro và bật nguồn: máy tự nạp lại bộ nhớ trong. Đã gồm runtime 32-bit, glremote, chế độ game, nhận thiết bị, tinh chỉnh bộ nhớ và `loglevel=4`. **Xoá cài đặt trong máy (âm lượng, ngôn ngữ…) và khoá SSH; dùng thẻ riêng, không dùng thẻ game.** Chỉ dành cho Brick Pro firmware gốc 1.1.1 (20260717). Hướng dẫn nằm trong zip (`HUONG_DAN_NAP.txt`). PortMaster nằm trên thẻ game nên vẫn cài riêng (gói `TOS-Installer+PortMaster`).
 
 ### B. Bộ cài trên máy (không nạp firmware, không xoá dữ liệu)
@@ -65,3 +65,5 @@ Nạp firmware hay ghi đĩa có thể làm mất dữ liệu; dùng thẻ riên
 ## Giấy phép và ghi công
 
 Mã nguồn của dự án: MIT ([LICENSE](LICENSE)). Thành phần bên thứ ba: xem [NOTICE](NOTICE) (PortMaster — MIT; SDL2 Debian — zlib; gói PortMaster gốc không bị sửa).
+
+Cập nhật runtime 09/10/2026: [chi tiết và phạm vi kiểm chứng](docs/RELEASE_UPDATE_20261009.md). Tên gói giữ nguyên; dùng SHA256 mới trên Release.

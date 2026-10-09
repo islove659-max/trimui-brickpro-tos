@@ -42,11 +42,12 @@ mkdir -p /dev/dri
 export SDL_VIDEODRIVER="${SDL_VIDEODRIVER:-KMSDRM_LEGACY}"
 export SDL_AUDIODRIVER="${SDL_AUDIODRIVER:-alsa}"
 export SDL_JOYSTICK_HIDAPI="${SDL_JOYSTICK_HIDAPI:-0}"   # HIDAPI cua SDL2 Debian gay loi khi thoat; tay cau TrimUI dung evdev
-LIBPATH="$RT/lib32:$RT/lib32-sdl2"
+LIBPATH="$RT/lib32:$RT/lib32-sdl2:$RT/gmlibs"
 [ -n "$GAMELIBS" ] && LIBPATH="$GAMELIBS:$LIBPATH"
 unset LD_LIBRARY_PATH
 
-/lib/ld-linux-armhf.so.3 --library-path "$LIBPATH" "$@" &
+# Execute the ELF itself so controller helpers see the real game process name.
+LD_LIBRARY_PATH="$LIBPATH" "$@" &
 APP=$!
 if [ "$MAX" -gt 0 ] 2>/dev/null; then
   ( sleep "$MAX"; kill -9 $APP 2>/dev/null ) &

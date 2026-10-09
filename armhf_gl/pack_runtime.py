@@ -14,6 +14,13 @@ files = [  # (nguon tuong doi stage, dich trong rootfs, mode)
     ('glremote_run', '/usr/bin/glremote_run', 0o755),
     ('README.txt', R + '/README.txt', 0o644),
 ]
+files.append(('licenses/libudev-copyright.txt', R + '/licenses/libudev-copyright.txt', 0o644))
+files.append(('trimui-controllerdb.txt', R + '/trimui-controllerdb.txt', 0o644))
+udev = os.path.join(stage, 'lib32', 'libudev.so.1')
+if os.path.isfile(udev): files.append(('lib32/libudev.so.1', R + '/lib32/libudev.so.1', 0o755))
+gmlibs = os.path.join(stage, 'gmlibs')
+if os.path.isdir(gmlibs):
+    files += [('gmlibs/' + n, R + '/gmlibs/' + n, 0o755) for n in sorted(os.listdir(gmlibs)) if os.path.isfile(os.path.join(gmlibs,n))]
 links = {  # ten -> muc tieu (tuong doi, cung thu muc)
     'libEGL.so.1': 'libglremote.so', 'libEGL.so': 'libglremote.so', 'libGLESv2.so.2': 'libglremote.so', 'libGLESv2.so': 'libglremote.so',
     'libGLESv1_CM.so.1': 'libglremote.so', 'libGL.so.1': 'libglremote.so', 'libGL.so': 'libglremote.so',
@@ -24,6 +31,8 @@ for n in ('libX11.so.6', 'libXext.so.6', 'libXcursor.so.1', 'libXinerama.so.1', 
           'libXxf86vm.so.1', 'libwayland-egl.so.1', 'libwayland-client.so.0', 'libwayland-cursor.so.0'):
     links[n] = 'libsdl_deps_stub.so'
 man = [{'type': 'dir', 'path': '/usr/lib/glremote'}, {'type': 'dir', 'path': R + '/lib32'}, {'type': 'dir', 'path': R + '/lib32-sdl2'}]
+man.append({'type':'dir','path':R+'/gmlibs'})
+man.append({'type':'dir','path':R+'/licenses'})
 out_files = os.path.join(dist, 'files')
 for src, dst, mode in files:
     data = open(os.path.join(stage, src.replace('/', os.sep)), 'rb').read()

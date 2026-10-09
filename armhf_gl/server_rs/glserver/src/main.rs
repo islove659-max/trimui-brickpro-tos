@@ -93,10 +93,14 @@ gl_table! {
     glGenerateMipmap(u32), glTexImage2D(u32, i32, i32, i32, i32, i32, u32, u32, VP),
     glTexSubImage2D(u32, i32, i32, i32, i32, i32, u32, u32, VP), glCopyTexImage2D(u32, i32, u32, i32, i32, i32, i32, i32),
     glGenFramebuffers(i32, *mut u32), glBindFramebuffer(u32, u32), glFramebufferTexture2D(u32, u32, u32, u32, i32),
-    glGenRenderbuffers(i32, *mut u32), glBindRenderbuffer(u32, u32), glRenderbufferStorage(u32, u32, i32, i32),
+    glGetFramebufferAttachmentParameteriv(u32,u32,u32,*mut i32), glGetRenderbufferParameteriv(u32,u32,*mut i32), glGenRenderbuffers(i32, *mut u32), glBindRenderbuffer(u32, u32), glRenderbufferStorage(u32, u32, i32, i32),
     glFramebufferRenderbuffer(u32, u32, u32, u32), glCheckFramebufferStatus(u32) -> u32,
     glDeleteFramebuffers(i32, *const u32), glDeleteRenderbuffers(i32, *const u32),
     glReadPixels(i32, i32, i32, i32, u32, u32, *mut c_void),
+    glPolygonOffset(f32, f32), glSampleCoverage(f32, u8), glStencilFuncSeparate(u32, u32, i32, u32), glStencilOpSeparate(u32, u32, u32, u32),
+    glStencilMaskSeparate(u32, u32), glCompressedTexImage2D(u32, i32, u32, i32, i32, i32, i32, VP), glCompressedTexSubImage2D(u32, i32, i32, i32, i32, i32, u32, i32, VP),
+    glCopyTexSubImage2D(u32, i32, i32, i32, i32, i32, i32, i32),
+    glGetActiveUniform(u32, u32, i32, PI, PI, *mut u32, *mut u8), glGetActiveAttrib(u32, u32, i32, PI, PI, *mut u32, *mut u8),
 }
 
 // ---- bộ nhớ chung (KHỚP shim) ----
@@ -113,7 +117,7 @@ static mut RESP_SEQ: u32 = 0;
 unsafe fn bump_seq() { RESP_SEQ = RESP_SEQ.wrapping_add(1); fence(Ordering::Release); write_volatile(hdr(H_RESP_SEQ), RESP_SEQ); }
 unsafe fn respond(v: &[u32]) { let mut i = 0; while i < v.len() { write_volatile(resp().add(i), v[i]); i += 1; } bump_seq(); }
 
-struct St { gl: Gl, win: *mut c_void, bound_array: u32, bound_elem: u32, frames: u64, cmds: u64 }
+struct St { gl: Gl, win: *mut c_void, bound_array: u32, bound_elem: u32, client_buffers: [u32;16], frames: u64, cmds: u64 }
 static mut ST: *mut St = null_mut();
 
 // accessors: p = con trỏ tới từ tham số đầu
@@ -168,11 +172,14 @@ unsafe fn dispatch(st: &mut St, op: u32, p: *const u32, n: usize) -> bool {
         27 => (g.glBufferData)(u(p, 0), u(p, 1) as isize, if u(p, 3) != 0 { p.add(4) as VP } else { null() }, u(p, 2)),
         28 => (g.glBufferSubData)(u(p, 0), u(p, 1) as isize, u(p, 2) as isize, p.add(3) as VP),
         53 => {
-            // mảng đỉnh phía client: trỏ thẳng vào vòng đệm (còn hiệu lực tới khi RPOS vượt qua)
-            let idx = u(p, 0);
-            if st.bound_array != 0 { (g.glBindBuffer)(0x8892, 0); }
-            (g.glVertexAttribPointer)(idx, s(p, 1), u(p, 2), u(p, 3) as u8, s(p, 4), p.add(6) as VP);
-            if st.bound_array != 0 { (g.glBindBuffer)(0x8892, st.bound_array); }
+            // Keep client vertices in owned VBOs; the shared ring is reused after dispatch.
+            let idx=u(p,0) as usize; let bytes=u(p,5) as usize;
+            if idx>=16 || n<8 || bytes>(n-8)*4 {die(b"invalid client attribute payload\n");}
+            if st.client_buffers[idx]==0 {(g.glGenBuffers)(1,&mut st.client_buffers[idx]);}
+            (g.glBindBuffer)(0x8892,st.client_buffers[idx]);
+            (g.glBufferData)(0x8892,bytes as isize,p.add(6) as VP,0x88E0);
+            (g.glVertexAttribPointer)(idx as u32,s(p,1),u(p,2),u(p,3) as u8,s(p,4),null());
+            (g.glBindBuffer)(0x8892,st.bound_array);
         }
         29 => (g.glDrawArrays)(u(p, 0), s(p, 1), s(p, 2)),
         30 => {
@@ -228,17 +235,67 @@ unsafe fn dispatch(st: &mut St, op: u32, p: *const u32, n: usize) -> bool {
         69 => (g.glBindRenderbuffer)(u(p, 0), u(p, 1)),
         70 => (g.glRenderbufferStorage)(u(p, 0), u(p, 1), s(p, 2), s(p, 3)),
         71 => (g.glFramebufferRenderbuffer)(u(p, 0), u(p, 1), u(p, 2), u(p, 3)),
-        72 => respond(&[(g.glCheckFramebufferStatus)(u(p, 0))]),
+        72 => respond(&[compatible_framebuffer(g,u(p,0))]),
         73 => {
             let (row, h) = (u(p, 6) as usize, s(p, 3));
             if row * (h as usize) <= RESP_WORDS * 4 { (g.glReadPixels)(s(p, 0), s(p, 1), s(p, 2), h, u(p, 4), u(p, 5), resp() as *mut c_void); }
             bump_seq();
+        }
+        79 => (g.glPolygonOffset)(f(p, 0), f(p, 1)),
+        80 => (g.glSampleCoverage)(f(p, 0), u(p, 1) as u8),
+        81 => (g.glStencilFuncSeparate)(u(p, 0), u(p, 1), s(p, 2), u(p, 3)),
+        82 => (g.glStencilOpSeparate)(u(p, 0), u(p, 1), u(p, 2), u(p, 3)),
+        83 => (g.glStencilMaskSeparate)(u(p, 0), u(p, 1)),
+        84 => (g.glCompressedTexImage2D)(u(p, 0), s(p, 1), u(p, 2), s(p, 3), s(p, 4), s(p, 5), s(p, 6), if u(p, 7) != 0 { p.add(8) as VP } else { null() }),
+        85 => (g.glCompressedTexSubImage2D)(u(p, 0), s(p, 1), s(p, 2), s(p, 3), s(p, 4), s(p, 5), u(p, 6), s(p, 7), p.add(8) as VP),
+        86 => (g.glCopyTexSubImage2D)(u(p, 0), s(p, 1), s(p, 2), s(p, 3), s(p, 4), s(p, 5), s(p, 6), s(p, 7)),
+        87 | 88 => {
+            let maxl = if u(p, 2) > 1000 { 1000 } else { u(p, 2) as i32 };
+            let (mut l, mut sz, mut ty) = (0i32, 1i32, 0x1406u32);
+            let nm = (resp() as *mut u8).add(12);
+            if op == 87 { (g.glGetActiveUniform)(u(p, 0), u(p, 1), maxl, &mut l, &mut sz, &mut ty, nm); } else { (g.glGetActiveAttrib)(u(p, 0), u(p, 1), maxl, &mut l, &mut sz, &mut ty, nm); }
+            write_volatile(resp(), l as u32); write_volatile(resp().add(1), sz as u32); write_volatile(resp().add(2), ty); bump_seq();
         }
         77 => (g.glCopyTexImage2D)(u(p, 0), s(p, 1), u(p, 2), s(p, 3), s(p, 4), s(p, 5), s(p, 6), s(p, 7)),
         _ => { out(b"lenh la "); out_num(op as u64); out(b"\n"); }
     }
     false
 }
+// PowerVR rejects separate depth/stencil renderbuffers. Upgrade that pair only
+// when rejected, reusing the depth object so normal client deletion owns its lifetime.
+unsafe fn compatible_framebuffer(g:&Gl,t:u32)->u32 {
+    let original=(g.glCheckFramebufferStatus)(t);if original!=0x8CDD{return original;}
+    let(mut dt,mut st,mut depth,mut stencil)=(0,0,0,0);
+    (g.glGetFramebufferAttachmentParameteriv)(t,0x8D00,0x8CD0,&mut dt);
+    (g.glGetFramebufferAttachmentParameteriv)(t,0x8D20,0x8CD0,&mut st);
+    if dt!=0x8D41 || st!=0x8D41{return original;}
+    (g.glGetFramebufferAttachmentParameteriv)(t,0x8D00,0x8CD1,&mut depth);
+    (g.glGetFramebufferAttachmentParameteriv)(t,0x8D20,0x8CD1,&mut stencil);
+    if depth==stencil{return original;}
+    let(mut prev,mut dw,mut dh,mut df,mut sw,mut sh,mut sf)=(0,0,0,0,0,0,0);
+    (g.glGetIntegerv)(0x8CA7,&mut prev);
+    (g.glBindRenderbuffer)(0x8D41,depth as u32);
+    (g.glGetRenderbufferParameteriv)(0x8D41,0x8D42,&mut dw);
+    (g.glGetRenderbufferParameteriv)(0x8D41,0x8D43,&mut dh);
+    (g.glGetRenderbufferParameteriv)(0x8D41,0x8D44,&mut df);
+    (g.glBindRenderbuffer)(0x8D41,stencil as u32);
+    (g.glGetRenderbufferParameteriv)(0x8D41,0x8D42,&mut sw);
+    (g.glGetRenderbufferParameteriv)(0x8D41,0x8D43,&mut sh);
+    (g.glGetRenderbufferParameteriv)(0x8D41,0x8D44,&mut sf);
+    if dw<=0 || dh<=0 || dw!=sw || dh!=sh || (df!=0x81A5 && df!=0x81A6) || sf!=0x8D48 {
+        (g.glBindRenderbuffer)(0x8D41,prev as u32);return original;
+    }
+    (g.glBindRenderbuffer)(0x8D41,depth as u32);
+    (g.glRenderbufferStorage)(0x8D41,0x88F0,dw,dh);
+    (g.glFramebufferRenderbuffer)(t,0x8D20,0x8D41,depth as u32);
+    let result=(g.glCheckFramebufferStatus)(t);
+    if result!=0x8CD5 {
+        (g.glRenderbufferStorage)(0x8D41,df as u32,dw,dh);
+        (g.glFramebufferRenderbuffer)(t,0x8D20,0x8D41,stencil as u32);
+    } else {out(b"framebuffer: packed depth/stencil compatibility enabled\n");}
+    (g.glBindRenderbuffer)(0x8D41,prev as u32);result
+}
+
 unsafe fn gen(_st: &mut St, fnp: unsafe extern "C" fn(i32, *mut u32), n: u32) {
     let mut ids = [0u32; 64]; let c = if n > 64 { 64 } else { n };
     fnp(c as i32, ids.as_mut_ptr()); respond(&ids[..c as usize]);
@@ -326,7 +383,7 @@ pub unsafe extern "C" fn rust_main(sp: *const usize) -> ! {
     write_volatile(hdr(H_RPOS), 0); write_volatile(hdr(H_WPOS), 0); write_volatile(hdr(H_RESP_SEQ), 0);
     fence(Ordering::Release);
     write_volatile(hdr(H_MAGIC), MAGIC); write_volatile(hdr(H_READY), 1);
-    let mut st = St { gl, win, bound_array: 0, bound_elem: 0, frames: 0, cmds: 0 };
+    let mut st = St { gl, win, bound_array: 0, bound_elem: 0, client_buffers: [0;16], frames: 0, cmds: 0 };
     ST = &mut st;
     out(b"san sang, cho client (/tmp/glremote.shm)\n");
 

@@ -1,4 +1,4 @@
-﻿# Build tat ca thanh phan glremote va tao goi runtime (manifest.json + files/) cho firmware.
+# Build glremote runtime; run from armhf_gl.
 # Chay: powershell -NoProfile -File build_runtime.ps1   (thu muc armhf_gl)
 $ErrorActionPreference = "Continue"
 $cargo = "$env:USERPROFILE\.cargo\bin\cargo.exe"
@@ -25,7 +25,13 @@ Push-Location $sv; try { powershell -NoProfile -File build.ps1 | Out-Null } fina
 Copy-Item "$sv\target\aarch64-unknown-linux-musl\release\glserver" "$stage\glserver" -Force
 New-Item -ItemType Directory -Force "$stage\lib32-sdl2" | Out-Null
 Copy-Item "C:\Users\X\tools\sdl_armhf_dl\libSDL2-2.0.so.0" "$stage\lib32-sdl2\libSDL2-2.0.so.0" -Force
+New-Item -ItemType Directory -Force "$stage\gmlibs" | Out-Null
+Copy-Item (Join-Path $PSScriptRoot "gmlibs\*") "$stage\gmlibs\" -Force
+Copy-Item (Join-Path $PSScriptRoot "runtime\glremote\lib32\libudev.so.1") "$stage\lib32\libudev.so.1" -Force
 Copy-Item (Join-Path $PSScriptRoot "runtime\glremote_run") "$stage\glremote_run" -Force
+New-Item -ItemType Directory -Force "$stage\licenses" | Out-Null
+Copy-Item (Join-Path $PSScriptRoot "runtime\licenses\libudev-copyright.txt") "$stage\licenses\libudev-copyright.txt" -Force
+Copy-Item (Join-Path $PSScriptRoot "runtime\trimui-controllerdb.txt") "$stage\trimui-controllerdb.txt" -Force
 Copy-Item (Join-Path $PSScriptRoot "runtime\README.txt") "$stage\README.txt" -Force
 python -I -X utf8 (Join-Path $PSScriptRoot "pack_runtime.py") $stage $dist
 Write-Host "xong: $dist"

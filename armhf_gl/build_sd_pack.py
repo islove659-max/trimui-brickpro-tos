@@ -29,7 +29,7 @@ for m in man:
     if m['type'] == 'symlink':      # the SD la FAT32: thay symlink bang ban sao cung noi dung
         tgt = os.path.normpath(os.path.join(os.path.dirname(m['path']), m['target'])).replace('\\', '/')
         files['System/glremote/' + m['path'][len(R):]] = src_of[tgt]
-glr_run = src_of['/usr/bin/glremote_run']
+glr_run = src_of['/usr/bin/glremote_run'].replace(b'RT=/usr/lib/glremote\n[ -f "$RT/glserver" ] || RT=/mnt/SDCARD/System/glremote', b'RT=/mnt/SDCARD/System/glremote')
 files['System/bin/glremote_run'] = glr_run
 files['System/glremote/VERSION'] = (VER + '\n').encode()
 
@@ -43,12 +43,14 @@ Cai: giai nen vao GOC the SD (se co System/bin/glremote_run va thu muc System/gl
 Dung trong script cua port PortMaster chi co ban ARMHF (thay cho dong chay game):
     export GAMELIBS="$GAMEDIR/libs.armhf"          # thu vien 32-bit cua game (neu co, uu tien truoc)
     /mnt/SDCARD/System/bin/glremote_run ./TenGame.armhf
-(Neu firmware co san thi lenh "glremote_run" nam trong PATH; script uu tien /usr/lib/glremote, khong thi System/glremote.)
+(Neu firmware co san thi lenh "glremote_run" nam trong PATH; lenh trong PATH dung runtime firmware; goi truc tiep System/bin/glremote_run dung runtime SD moi.)
 
 Bien moi truong (tuy chon):  GAMELIBS, GLR_MAX (gioi han giay), GLR_NULL=1 (thu khong man hinh/loa),
 SDL_VIDEODRIVER (mac dinh KMSDRM_LEGACY), SDL_AUDIODRIVER (mac dinh alsa) - ca hai la ban gia do glremote cung cap.
 
 Gioi han: chi OpenGL ES 2 (khong GLES3/VAO), mot luong GL, am thanh S16 48 kHz, chua co ghi am.
+Cap nhat 09/10/2026: sua framebuffer PowerVR va vertex arrays; them libudev ARMHF, gmlibs va trimui-controllerdb.txt.
+Nap profile phim qua SDL_GAMECONTROLLERCONFIG_FILE trong launcher.
 Loi da biet: SDL2 32-bit du phong (Debian 11) segfault khi SDL_QuitSubSystem(JOYSTICK) luc thoat; game mang SDL2 rieng khong bi.
 Go bo: xoa System/bin/glremote_run va thu muc System/glremote.
 """
